@@ -69,6 +69,7 @@ class Jafu
     public function setFiles($files)
     {
         $this->files = $this->normalize($files);
+        print_r($this->files);
     }
 
     /**
@@ -85,22 +86,26 @@ class Jafu
             if (gettype($files[$key]['name']) === 'array') {
                 for ($i = 0; $i < count($files[$key]['name']); $i++) {
                     // assumption is the root of all evil. todo: check if the structure can differ. (also, what happens when there are multiple uploads and some are not used)
-                    $filesNormalized[] = array(
-                        'name' => $files[$key]['name'][$i],
-                        'type' => $files[$key]['type'][$i],
-                        'tmp_name' => $files[$key]['tmp_name'][$i],
-                        'error' => $files[$key]['error'][$i],
-                        'size' => $files[$key]['size'][$i],
-                    );
+                    if ($files[$key]['error'][$i] !== 4) { // 4 means no file uploaded; assume for now that multiple upload inputs where used and some not used
+                        $filesNormalized[] = array(
+                            'name' => $files[$key]['name'][$i],
+                            'type' => $files[$key]['type'][$i],
+                            'tmp_name' => $files[$key]['tmp_name'][$i],
+                            'error' => $files[$key]['error'][$i],
+                            'size' => $files[$key]['size'][$i],
+                        );
+                    }
                 }
             } else {
-                $filesNormalized[] = array(
-                    'name' => $files[$key]['name'],
-                    'type' => $files[$key]['type'],
-                    'tmp_name' => $files[$key]['tmp_name'],
-                    'error' => $files[$key]['error'],
-                    'size' => $files[$key]['size'],
-                );
+                if ($files[$key]['error'] !== 4) { // 4 means no file uploaded; assume for now that multiple upload inputs where used and some not used
+                    $filesNormalized[] = array(
+                        'name' => $files[$key]['name'],
+                        'type' => $files[$key]['type'],
+                        'tmp_name' => $files[$key]['tmp_name'],
+                        'error' => $files[$key]['error'],
+                        'size' => $files[$key]['size'],
+                    );
+                }
             }
         }
         return $filesNormalized;
