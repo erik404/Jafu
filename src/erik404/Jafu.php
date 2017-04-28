@@ -57,7 +57,7 @@ class Jafu
     }
 
     /**
-     * Expects the $_FILES array
+     * Holds a normalized array containing the information passed with the $_FILES array.
      * @var
      */
     protected $files;
