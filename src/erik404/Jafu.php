@@ -17,6 +17,18 @@ class Jafu
     const IMAGE_TYPES = array('image/gif', 'image/png', 'image/jpeg', 'image/bmp');
     const VIDEO_TYPES = array('video/webm', 'video/ogg');
 
+    protected $fileUploadErrors = array(
+        0 => 'There is no error, the file uploaded with success',
+        1 => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
+        2 => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
+        3 => 'The uploaded file was only partially uploaded',
+        4 => 'No file was uploaded',
+        6 => 'Missing a temporary folder',
+        7 => 'Failed to write file to disk.',
+        8 => 'A PHP extension stopped the file upload.',
+    );
+
+
     /**
      * Holds the config object
      * @var object
@@ -29,6 +41,16 @@ class Jafu
     public function setConfig($config)
     {
         $this->config = $config;
+    }
+
+    protected $errors = array();
+
+    /**
+     * @return array
+     */
+    public function getErrors()
+    {
+        return $this->errors;
     }
 
     /**
@@ -69,7 +91,65 @@ class Jafu
     public function setFiles($files)
     {
         $this->files = $this->normalize($files);
-        print_r($this->files);
+    }
+
+    /**
+     * Checks if there are upload errors, if not saves the files to the filedisk
+     * @return bool
+     */
+    public function save()
+    {
+        if ($this->checkForErrors()) {
+            return false; // there was an error with (one of) the fileupload(s)
+        }
+
+        if (!$this->checkIfUploadedFilesAreAllowed()) {
+            return false; // the MIME type is not allowed
+        }
+
+        $this->saveFilesToFiledisk();
+    }
+
+    /**
+     * Check the array with files for errors (ignoring errorCode 4 which means no file uploaded)
+     * @return bool
+     */
+    private function checkForErrors()
+    {
+        foreach ($this->files as $file) {
+            if ( (int) $file['error'] !== 0 && (int) $file['error'] !== 4) { // ignore no file uploaded for now because of multiple upload forms
+                $this->errors[] = array($file['name'] => $this->fileUploadErrors[$file['error']]);
+            }
+        }
+        return (!empty($this->errors));
+    }
+
+    /**
+     * Checks if the files MIME type is according to $this->allowedFileTypes
+     * @return bool
+     */
+    private function checkIfUploadedFilesAreAllowed()
+    {
+        foreach($this->files as $file) {
+            if (!in_array($file['type'], $this->allowedFileTypes)) {
+                $this->errors[] = array($file['name'] => 'File type ' . $file['type'] . ' not allowed.');
+            }
+        }
+        return (!empty($this->errors));
+    }
+
+    /**
+     *
+     */
+    private function saveFilesToFiledisk()
+    {
+        foreach($this->files as $file) {
+            // get the default file save location
+            // get the name
+            // create sanitized name
+            // save to disk
+            // remove tmp file
+        }
     }
 
     /**
@@ -85,7 +165,6 @@ class Jafu
         foreach ($files as $key => $value) {
             if (gettype($files[$key]['name']) === 'array') {
                 for ($i = 0; $i < count($files[$key]['name']); $i++) {
-                    // assumption is the root of all evil. todo: check if the structure can differ. (also, what happens when there are multiple uploads and some are not used)
                     if ($files[$key]['error'][$i] !== 4) { // 4 means no file uploaded; assume for now that multiple upload inputs where used and some not used
                         $filesNormalized[] = array(
                             'name' => $files[$key]['name'][$i],
