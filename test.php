@@ -24,8 +24,8 @@ if ($_FILES) {
 <html>
 <body>
 <form action="#" enctype="multipart/form-data" method="post">
-        <input type="file" name="poep" />
-    <input type="file" name="kutje[]" multiple="multiple" />
+        <input type="file" name="test1" />
+    <input type="file" name="test2[]" multiple="multiple" />
         <input type="submit" value="Send">
 </form>
 
