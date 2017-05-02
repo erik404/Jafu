@@ -1,4 +1,4 @@
 # Jafu
-_"Just Another File Uploader"_
+_"Just Another File Uploader"
 
-Generic file uploader and file validator class which can be used stand-alone.
+Generic standalone file uploader and file validator class.
