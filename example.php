@@ -62,6 +62,7 @@ if (!empty($_FILES)) {
             //      [error] => 9 // the error code
             //      [message] => File type text/plain not allowed. // the error message
             //  )
+            //  -- OR
             //  Array
             //  (
             //      [name] =>
