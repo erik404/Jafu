@@ -134,6 +134,8 @@ class Jafu
 
     /**
      * Jafu constructor.
+     *
+     * @throws \Exception
      */
     function __construct()
     {
@@ -148,7 +150,6 @@ class Jafu
      * Performs the validation and save operation
      *
      * @return bool
-     * @throws \Exception
      */
     public function save()
     {
@@ -200,7 +201,6 @@ class Jafu
     /**
      * Checks if the files MIME type is allowed or not
      *
-     * @throws \Exception
      * @return bool
      */
     private function checkIfMimeTypeIsRestricted()
@@ -249,7 +249,7 @@ class Jafu
                 $fileExists = file_exists($target);
             }
             if (!move_uploaded_file($file->tmpName, $target)) {
-                // throw an exception because this is a error the user can't fix. todo rollback earlier saved files
+                // throws an exception because this is a error the user can't fix. todo rollback earlier saved files
                 throw new \Exception('The file ' . $target . ' could not be saved to the filesystem.');
             } else {
                 // add saved file to result array
