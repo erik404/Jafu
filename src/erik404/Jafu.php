@@ -21,9 +21,10 @@ class Jafu
     /**
      * @var int
      */
-    protected $mimeTypeNotAllowedResponseCode = 9;
-    protected $noFileUploadedResponseCode     = 4;
-    protected $fileUploadedResponseCode       = 0;
+    protected $mimeValidationThruFinfoFailedCode = 10;
+    protected $mimeTypeNotAllowedResponseCode    = 9;
+    protected $noFileUploadedResponseCode        = 4;
+    protected $fileUploadedResponseCode          = 0;
 
     /**
      * Holds the config object
@@ -188,8 +189,8 @@ class Jafu
             $this->errors[] = array(
                 'name'      => null,
                 'inputName' => null,
-                'error'   => $this->noFileUploadedResponseCode,
-                'message' => $this->config->responseMessages[$this->noFileUploadedResponseCode]
+                'error'     => $this->noFileUploadedResponseCode,
+                'message'   => $this->config->responseMessages[$this->noFileUploadedResponseCode]
             );
         } else {
             // loop through all uploaded files and set the according error response if there are any
@@ -211,18 +212,32 @@ class Jafu
     /**
      * Checks if the files MIME type is allowed or not
      *
+     * @throws \Exception
      * @return bool
      */
     private function checkIfMimeTypeIsRestricted()
     {
         foreach ($this->files as $file) {
-            if (!in_array($file->type, $this->allowedMimeTypes)) {
-                $this->errors[] = array(
+            // fetches the files MIME-type using PHP's finfo
+            // see: http://php.net/manual/en/class.finfo.php
+            $finfo    = new \finfo(FILEINFO_MIME);
+            $mimeType = $finfo->file($file->tmpName);
+            $mimeType = $mimeType === false ? false : explode(';', $mimeType)[0];
+
+            // check the fetched MIME-type against the allowedMimeTypes array
+            if (!$mimeType || !in_array($mimeType, $this->allowedMimeTypes)) {
+                $error = array(
                     'name'      => $file->name,
-                    'inputName' => $file->inputName,
-                    'error'     => $this->mimeTypeNotAllowedResponseCode,
-                    'message'   => str_replace('%s', $file->type, $this->config->responseMessages[$this->mimeTypeNotAllowedResponseCode])
+                    'inputName' => $file->inputName
                 );
+                if (!$mimeType) {
+                    $error['error'] = $this->mimeValidationThruFinfoFailedCode;
+                    $error['message'] = $this->config->responseMessages[$this->mimeValidationThruFinfoFailedCode];
+                } else {
+                    $error['error'] = $this->mimeTypeNotAllowedResponseCode;
+                    $error['message'] = str_replace('%s', $mimeType, $this->config->responseMessages[$this->mimeTypeNotAllowedResponseCode]);
+                }
+                $this->errors[] = $error;
             }
         }
 
