@@ -1,5 +1,6 @@
 <?php
 /**
+ * v1.0
  * Just Another File Uploader
  * Erik-Jan van de Wal, MIT License 2017.
  */
