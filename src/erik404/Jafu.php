@@ -87,7 +87,7 @@ class Jafu
     /**
      * Holds a normalized array containing the information passed with the $_FILES array.
      *
-     * @var
+     * @var array
      */
     protected $files;
 
