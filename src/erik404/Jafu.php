@@ -60,26 +60,26 @@ class Jafu
      *
      * @var array
      */
-    protected $allowedFileTypes = array();
+    protected $allowedMimeTypes = array();
 
     /**
      * @return array
      */
-    public function getAllowedFileTypes()
+    public function getAllowedMimeTypes()
     {
-        return $this->allowedFileTypes;
+        return $this->allowedMimeTypes;
     }
 
     /**
      * Expects (multiple) one-dimensional arrays holding the mime-types which are allowed for upload.
      *
-     * @param \array[] ...$allowedFileTypes
+     * @param \array[] ...$allowedMimeTypes
      * @return void
      */
-    public function setAllowedFileTypes(Array ...$allowedFileTypes)
+    public function setAllowedMimeTypes(Array ...$allowedMimeTypes)
     {
-        foreach ($allowedFileTypes as $allowedFileTypesArray) {
-            $this->allowedFileTypes = array_merge($this->allowedFileTypes, $allowedFileTypesArray);
+        foreach ($allowedMimeTypes as $allowedFileTypesArray) {
+            $this->allowedMimeTypes = array_merge($this->allowedMimeTypes, $allowedFileTypesArray);
         }
     }
 
@@ -165,7 +165,7 @@ class Jafu
         if ($this->checkForErrors()) {
             return false; // there was an error with (one of) the file-upload(s)
         }
-        if ($this->checkIfFileTypeIsRestricted()) {
+        if ($this->checkIfMimeTypeIsRestricted()) {
             return false; // the MIME type of (one of) the file(s) is not allowed
         }
 
@@ -185,6 +185,8 @@ class Jafu
         // check if there are uploaded files, if not, set the right error response
         if (empty($this->files)) {
             $this->errors[] = array(
+                'name'      => null,
+                'inputName' => null,
                 'error'   => $this->noFileUploadedResponseCode,
                 'message' => $this->config->responseMessages[$this->noFileUploadedResponseCode]
             );
@@ -210,10 +212,10 @@ class Jafu
      *
      * @return bool
      */
-    private function checkIfFileTypeIsRestricted()
+    private function checkIfMimeTypeIsRestricted()
     {
         foreach ($this->files as $file) {
-            if (!in_array($file->type, $this->allowedFileTypes)) {
+            if (!in_array($file->type, $this->allowedMimeTypes)) {
                 $this->errors[] = array(
                     'name'      => $file->name,
                     'inputName' => $file->inputName,
@@ -227,7 +229,7 @@ class Jafu
     }
 
     /**
-     * Creates an unique name per file and saves it to the filesystem. On success the new file is stored in the result array together with the name of the input from the form
+     * Creates an unique name per file and saves it to the filesystem. On success the new file is stored in the result array together with the name of the input from which the upload originates from
      *
      * @return void
      * @throws \Exception
@@ -235,7 +237,7 @@ class Jafu
     private function saveFilesToFilesystem()
     {
         foreach ($this->files as $file) {
-            // create an unique name, validate if this is truly unique and save it to disk
+            // create an unique name, validate if this is truly unique and saves it to disk
             $target     = null;
             $fileExists = true;
             while ($fileExists) {
@@ -257,7 +259,7 @@ class Jafu
 
     /**
      * Structure the information stored in $_FILES so Jafu can handle both single and multiple file-uploads.
-     * Ignore error code 4 (noFileUploadedResponseCode). This enables multiple optional file-uploads.
+     * Ignore error code 4 (noFileUploadedResponseCode). This enables optional multiple file-uploads.
      *
      * @param $files ($_FILES)
      * @return array holding the uploaded file information in objects
