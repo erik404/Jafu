@@ -30,7 +30,7 @@ if (!empty($_FILES)) {
     $success = $jafu->save();
 
     // check if the save was successful
-    if ($success == true) {
+    if ($success === true) {
         // get the result array
         $results = $jafu->getResult();
         // loop through the results holding the file
