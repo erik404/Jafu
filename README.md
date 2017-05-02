@@ -1,4 +1,4 @@
-v1.0
+v1.0.0
 # Jafu
 *"Just Another File Uploader"*
 
