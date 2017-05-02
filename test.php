@@ -1,9 +1,8 @@
 <?php
-
-abstract class PHPUnit_Framework_Assert
+class test extends PHPUnit_Framework_TestCase
 {
-    public static function assertTrue($condition = true, $message = '')
-    {
-        self::assertThat($condition, self::isTrue(), $message);
+    public function testOnePlusOne() {
+        $this->assertTrue(true);
     }
 }
+?>
