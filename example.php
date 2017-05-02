@@ -68,6 +68,8 @@ if (!empty($_FILES)) {
             //      [error] => 9 // the error code
             //      [message] => File type text/plain not allowed. // the error message
             //  )
+            //  ...
+            //  ...
             //  -- OR
             //  Array
             //  (
@@ -76,8 +78,6 @@ if (!empty($_FILES)) {
             //      [error] => 4
             //      [message] => No file was uploaded.
             //  )
-            //  ...
-            //  ...
 
             // output to screen
             echo '<p>Failed with error code "' . $error['error'] . '" and message "' . $error['message'] . '"</p>';
