@@ -12,29 +12,28 @@ class Jafu
      * see: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
      */
     const APPLICATION_TYPES = array('application/octet-stream', 'application/pkcs12', 'application/vnd.mspowerpoint', 'application/xhtml+xml', 'application/xml', 'application/pdf', 'application/msword');
-    const AUDIO_TYPES = array('audio/midi', 'audio/mpeg', 'audio/webm', 'audio/ogg', 'audio/wav');
-    const TEXT_TYPES = array('text/plain', 'text/html', 'text/css', 'text/javascript');
-    const IMAGE_TYPES = array('image/gif', 'image/png', 'image/jpeg', 'image/bmp');
-    const VIDEO_TYPES = array('video/webm', 'video/ogg');
-    const ERROR_MESSAGES = array(
-        0 => 'There is no error, the file uploaded with success',
-        1 => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
-        2 => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
-        3 => 'The uploaded file was only partially uploaded',
-        4 => 'No file was uploaded',
-        6 => 'Missing a temporary folder',
-        7 => 'Failed to write file to disk.',
-        8 => 'A PHP extension stopped the file upload.',
-    );
+    const AUDIO_TYPES       = array('audio/midi', 'audio/mpeg', 'audio/webm', 'audio/ogg', 'audio/wav');
+    const TEXT_TYPES        = array('text/plain', 'text/html', 'text/css', 'text/javascript');
+    const IMAGE_TYPES       = array('image/gif', 'image/png', 'image/jpeg', 'image/bmp');
+    const VIDEO_TYPES       = array('video/webm', 'video/ogg');
+
+    /**
+     * @var int
+     */
+    protected $mimeTypeNotAllowedResponseCode = 9;
+    protected $noFileUploadedResponseCode     = 4;
+    protected $fileUploadedResponseCode       = 0;
 
     /**
      * Holds the config object
+     *
      * @var object
      */
     protected $config;
 
     /**
      * @param object $config
+     * @return void
      */
     public function setConfig($config)
     {
@@ -42,7 +41,8 @@ class Jafu
     }
 
     /**
-     * Holds the errors if any
+     * Holds the errors array
+     *
      * @var array
      */
     protected $errors = array();
@@ -56,7 +56,8 @@ class Jafu
     }
 
     /**
-     * Holds the allowed file types which will be asserted
+     * Holds the allowed file types array
+     *
      * @var array
      */
     protected $allowedFileTypes = array();
@@ -71,7 +72,9 @@ class Jafu
 
     /**
      * Expects (multiple) one-dimensional arrays holding the mime-types which are allowed for upload.
+     *
      * @param \array[] ...$allowedFileTypes
+     * @return void
      */
     public function setAllowedFileTypes(Array ...$allowedFileTypes)
     {
@@ -82,21 +85,26 @@ class Jafu
 
     /**
      * Holds a normalized array containing the information passed with the $_FILES array.
+     *
      * @var
      */
     protected $files;
 
     /**
      * Expects the $_FILES array and normalizes this to a more sane structure.
+     *
      * @param mixed $files
+     * @return void
      */
     public function setFiles($files)
     {
+        // todo validate if we truly are given the $_FILES array
         $this->files = $this->normalize($files);
     }
 
     /**
-     * Holds the location of where the file must be saved
+     * Holds the directory where the file must be saved
+     *
      * @var
      */
     protected $saveLocation;
@@ -111,10 +119,30 @@ class Jafu
 
     /**
      * @param mixed $saveLocation
+     * @throws \Exception
+     * @return void
      */
     public function setSaveLocation($saveLocation)
     {
+        if (!is_writable($saveLocation)) {
+            throw new \Exception('Directory ' . $saveLocation . ' not writable.');
+        }
         $this->saveLocation = $saveLocation;
+    }
+
+    /**
+     * Holds the files which are successfully uploaded
+     *
+     * @var array
+     */
+    protected $result = array();
+
+    /**
+     * @return array
+     */
+    public function getResult()
+    {
+        return $this->result;
     }
 
     /**
@@ -122,82 +150,117 @@ class Jafu
      */
     function __construct()
     {
-        try {
-            $this->setConfig(require('config.php'));
-            $this->setSaveLocation($this->config->defaultSaveLocation);
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
-        }
+        $this->setConfig(require('config.php'));
+        $this->setSaveLocation($this->config->defaultSaveLocation);
     }
 
     /**
-     * Checks if there are upload errors, if not saves the files to the filedisk
+     * Performs the validation and save operation
+     *
      * @return bool
+     * @throws \Exception
      */
     public function save()
     {
         if ($this->checkForErrors()) {
-            return false; // there was an error with (one of) the fileupload(s)
+            return false; // there was an error with (one of) the file-upload(s)
+        }
+        if ($this->checkIfFileTypeIsRestricted()) {
+            return false; // the MIME type of (one of) the file(s) is not allowed
         }
 
-        if (!$this->checkIfUploadedFilesAreAllowed()) {
-            return false; // the MIME type is not allowed
-        }
-
-        $this->saveFilesToFiledisk();
+        // do the actual saving.
+        $this->saveFilesToFilesystem();
 
         return true;
     }
 
     /**
-     * Check the array with files for errors (ignoring errorCode 4 which means no file uploaded)
+     * Check the uploaded files for errors
+     *
      * @return bool
      */
     private function checkForErrors()
     {
-        foreach ($this->files as $file) {
-            if ( (int) $file['error'] !== 0 && (int) $file['error'] !== 4) { // ignore no file uploaded for now because of multiple upload forms
-                $this->errors[] = array($file['name'] => Jafu::ERROR_MESSAGES[$file['error']]);
+        // check if there are uploaded files, if not, set the right error response
+        if (empty($this->files)) {
+            $this->errors[] = array(
+                'error'   => $this->noFileUploadedResponseCode,
+                'message' => $this->config->responseMessages[$this->noFileUploadedResponseCode]
+            );
+        } else {
+            // loop through all uploaded files and set the according error response if there are any
+            foreach ($this->files as $file) {
+                if ($file->error !== $this->fileUploadedResponseCode) {
+                    $this->errors[] = array(
+                        'name'      => $file->name,
+                        'inputName' => $file->inputName,
+                        'error'     => $file->error,
+                        'message'   => $this->config->responseMessages[$file->error]
+                    );
+                }
             }
         }
-        return (!empty($this->errors));
+
+        return (!empty($this->errors)); // returns false if there are no errors
     }
 
     /**
-     * Checks if the files MIME type is according to $this->allowedFileTypes
+     * Checks if the files MIME type is allowed or not
+     *
      * @return bool
      */
-    private function checkIfUploadedFilesAreAllowed()
+    private function checkIfFileTypeIsRestricted()
     {
-        foreach($this->files as $file) {
-            if (!in_array($file['type'], $this->allowedFileTypes)) {
-                $this->errors[] = array($file['name'] => 'File type ' . $file['type'] . ' not allowed.');
+        foreach ($this->files as $file) {
+            if (!in_array($file->type, $this->allowedFileTypes)) {
+                $this->errors[] = array(
+                    'name'      => $file->name,
+                    'inputName' => $file->inputName,
+                    'error'     => $this->mimeTypeNotAllowedResponseCode,
+                    'message'   => str_replace('%s', $file->type, $this->config->responseMessages[$this->mimeTypeNotAllowedResponseCode])
+                );
             }
         }
-        return (!empty($this->errors));
+
+        return (!empty($this->errors)); // returns false if there are no errors
     }
 
     /**
+     * Creates an unique name per file and saves it to the filesystem. On success the new file is stored in the result array together with the name of the input from the form
      *
+     * @return void
+     * @throws \Exception
      */
-    private function saveFilesToFiledisk()
+    private function saveFilesToFilesystem()
     {
-        foreach($this->files as $file) {
-
-            // get the file save location
-            // get the name
-            // create sanitized name
-            // save to disk
-            // remove tmp file
+        foreach ($this->files as $file) {
+            // create an unique name, validate if this is truly unique and save it to disk
+            $target     = null;
+            $fileExists = true;
+            while ($fileExists) {
+                $target     = $this->getSaveLocation() . str_replace('.', '', uniqid(time(), true)) . '_' . basename($file->name);
+                $fileExists = file_exists($target);
+            }
+            if (!move_uploaded_file($file->tmpName, $target)) {
+                // throw an exception because this is a error the user can't fix. todo rollback earlier saved files
+                throw new \Exception('The file ' . $target . ' could not be saved to the filesystem.');
+            } else {
+                // add saved file to result array
+                $this->result[] = array(
+                    'file'      => $target,
+                    'inputName' => $file->inputName
+                );
+            }
         }
     }
 
     /**
-     * Normalizes the information stored in $_FILES to represent a less insane structure.
-     * see: http://php.net/manual/en/features.file-upload.post-method.php
+     * Structure the information stored in $_FILES so Jafu can handle both single and multiple file-uploads.
+     * Ignore error code 4 (noFileUploadedResponseCode). This enables multiple optional file-uploads.
      *
      * @param $files ($_FILES)
-     * @return array
+     * @return array holding the uploaded file information in objects
      */
     private function normalize($files)
     {
@@ -205,28 +268,31 @@ class Jafu
         foreach ($files as $key => $value) {
             if (gettype($files[$key]['name']) === 'array') {
                 for ($i = 0; $i < count($files[$key]['name']); $i++) {
-                    if ($files[$key]['error'][$i] !== 4) { // 4 means no file uploaded; assume for now that multiple upload inputs where used and some not used
-                        $filesNormalized[] = array(
-                            'name' => $files[$key]['name'][$i],
-                            'type' => $files[$key]['type'][$i],
-                            'tmp_name' => $files[$key]['tmp_name'][$i],
-                            'error' => $files[$key]['error'][$i],
-                            'size' => $files[$key]['size'][$i],
+                    if ($files[$key]['error'][$i] !== $this->noFileUploadedResponseCode) {
+                        $filesNormalized[] = (object)array(
+                            'name'      => $files[$key]['name'][$i],
+                            'type'      => $files[$key]['type'][$i],
+                            'tmpName'   => $files[$key]['tmp_name'][$i],
+                            'error'     => (int)$files[$key]['error'][$i],
+                            'size'      => $files[$key]['size'][$i],
+                            'inputName' => $key
                         );
                     }
                 }
             } else {
-                if ($files[$key]['error'] !== 4) { // 4 means no file uploaded; assume for now that multiple upload inputs where used and some not used
-                    $filesNormalized[] = array(
-                        'name' => $files[$key]['name'],
-                        'type' => $files[$key]['type'],
-                        'tmp_name' => $files[$key]['tmp_name'],
-                        'error' => $files[$key]['error'],
-                        'size' => $files[$key]['size'],
+                if ($files[$key]['error'] !== $this->noFileUploadedResponseCode) {
+                    $filesNormalized[] = (object)array(
+                        'name'      => $files[$key]['name'],
+                        'type'      => $files[$key]['type'],
+                        'tmpName'   => $files[$key]['tmp_name'],
+                        'error'     => (int)$files[$key]['error'],
+                        'size'      => $files[$key]['size'],
+                        'inputName' => $key
                     );
                 }
             }
         }
+
         return $filesNormalized;
     }
 }
