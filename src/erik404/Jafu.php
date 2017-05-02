@@ -16,8 +16,7 @@ class Jafu
     const TEXT_TYPES = array('text/plain', 'text/html', 'text/css', 'text/javascript');
     const IMAGE_TYPES = array('image/gif', 'image/png', 'image/jpeg', 'image/bmp');
     const VIDEO_TYPES = array('video/webm', 'video/ogg');
-
-    protected $fileUploadErrors = array(
+    const ERROR_MESSAGES = array(
         0 => 'There is no error, the file uploaded with success',
         1 => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
         2 => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
@@ -27,7 +26,6 @@ class Jafu
         7 => 'Failed to write file to disk.',
         8 => 'A PHP extension stopped the file upload.',
     );
-
 
     /**
      * Holds the config object
@@ -43,6 +41,10 @@ class Jafu
         $this->config = $config;
     }
 
+    /**
+     * Holds the errors if any
+     * @var array
+     */
     protected $errors = array();
 
     /**
@@ -94,6 +96,41 @@ class Jafu
     }
 
     /**
+     * Holds the location of where the file must be saved
+     * @var
+     */
+    protected $saveLocation;
+
+    /**
+     * @return mixed
+     */
+    public function getSaveLocation()
+    {
+        return $this->saveLocation;
+    }
+
+    /**
+     * @param mixed $saveLocation
+     */
+    public function setSaveLocation($saveLocation)
+    {
+        $this->saveLocation = $saveLocation;
+    }
+
+    /**
+     * Jafu constructor.
+     */
+    function __construct()
+    {
+        try {
+            $this->setConfig(require('config.php'));
+            $this->setSaveLocation($this->config->defaultSaveLocation);
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
+        }
+    }
+
+    /**
      * Checks if there are upload errors, if not saves the files to the filedisk
      * @return bool
      */
@@ -108,6 +145,8 @@ class Jafu
         }
 
         $this->saveFilesToFiledisk();
+
+        return true;
     }
 
     /**
@@ -118,7 +157,7 @@ class Jafu
     {
         foreach ($this->files as $file) {
             if ( (int) $file['error'] !== 0 && (int) $file['error'] !== 4) { // ignore no file uploaded for now because of multiple upload forms
-                $this->errors[] = array($file['name'] => $this->fileUploadErrors[$file['error']]);
+                $this->errors[] = array($file['name'] => Jafu::ERROR_MESSAGES[$file['error']]);
             }
         }
         return (!empty($this->errors));
@@ -144,7 +183,8 @@ class Jafu
     private function saveFilesToFiledisk()
     {
         foreach($this->files as $file) {
-            // get the default file save location
+
+            // get the file save location
             // get the name
             // create sanitized name
             // save to disk
@@ -189,17 +229,4 @@ class Jafu
         }
         return $filesNormalized;
     }
-
-    /**
-     * Jafu constructor.
-     */
-    function __construct()
-    {
-        try {
-            $this->setConfig(require('config.php'));
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
-        }
-    }
-
 }
