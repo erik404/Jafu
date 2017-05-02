@@ -21,9 +21,15 @@ if (!empty($_FILES)) {
     $jafu = new Jafu();
 
     // set the allowed MIME types. (expects at least 1 one-dimensional array but you can pass as many as you please)
+    // you can use predefined constants from the class. IMAGE_TYPES, APPLICATION_TYPES, AUDIO_TYPES, TEXT_TYPES, VIDEO_TYPES.
     $jafu->setAllowedMimeTypes(Jafu::IMAGE_TYPES, array('other/types', 'you/need'));
 
-    // set the $_FILES global to Jafu
+    // the default save location is stored in the config.php file under 'defaultSaveLocation' and can be changed.
+    // you can override the save location using the setSaveLocation function and passing a location on the file-system.
+    // you can always retrieve the 'defaultSaveLocation' stored in the config with the getDefaultSaveLocation function.
+    $jafu->setSaveLocation($jafu->getDefaultSaveLocation()); // $jafu->setSaveLocation('/path/on/system');
+
+    // pass the $_FILES to Jafu
     $jafu->setFiles($_FILES);
 
     // save the files, the save method returns a success boolean
@@ -32,7 +38,7 @@ if (!empty($_FILES)) {
     // check if the save was successful
     if ($success === true) {
         // get the result array
-        $results = $jafu->getResult();
+        $results = $jafu->getResults();
         // loop through the results holding the file
         foreach ($results as $result) {
 

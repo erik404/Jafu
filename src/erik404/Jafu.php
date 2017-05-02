@@ -34,15 +34,6 @@ class Jafu
     protected $config;
 
     /**
-     * @param object $config
-     * @return void
-     */
-    public function setConfig($config)
-    {
-        $this->config = $config;
-    }
-
-    /**
      * Holds the errors array
      *
      * @var array
@@ -63,14 +54,6 @@ class Jafu
      * @var array
      */
     protected $allowedMimeTypes = array();
-
-    /**
-     * @return array
-     */
-    public function getAllowedMimeTypes()
-    {
-        return $this->allowedMimeTypes;
-    }
 
     /**
      * Expects (multiple) one-dimensional arrays holding the mime-types which are allowed for upload.
@@ -112,14 +95,6 @@ class Jafu
     protected $saveLocation;
 
     /**
-     * @return mixed
-     */
-    public function getSaveLocation()
-    {
-        return $this->saveLocation;
-    }
-
-    /**
      * @param mixed $saveLocation
      * @throws \Exception
      * @return void
@@ -133,18 +108,28 @@ class Jafu
     }
 
     /**
+     * Returns the default save location from the config file
+     *
+     * @return mixed
+     */
+    public function getDefaultSaveLocation()
+    {
+        return $this->config->defaultSaveLocation;
+    }
+
+    /**
      * Holds the files which are successfully uploaded
      *
      * @var array
      */
-    protected $result = array();
+    protected $results = array();
 
     /**
      * @return array
      */
-    public function getResult()
+    public function getResults()
     {
-        return $this->result;
+        return $this->results;
     }
 
     /**
@@ -152,7 +137,10 @@ class Jafu
      */
     function __construct()
     {
-        $this->setConfig(require('config.php'));
+        if (!file_exists('config.php')) {
+            throw new \Exception('The file config.php can not be found. Did you forgot to rename the config.php.dist in src/erik404/ to config.php?');
+        }
+        $this->config = require('config.php');
         $this->setSaveLocation($this->config->defaultSaveLocation);
     }
 
@@ -231,10 +219,10 @@ class Jafu
                     'inputName' => $file->inputName
                 );
                 if (!$mimeType) {
-                    $error['error'] = $this->mimeValidationThruFinfoFailedCode;
+                    $error['error']   = $this->mimeValidationThruFinfoFailedCode;
                     $error['message'] = $this->config->responseMessages[$this->mimeValidationThruFinfoFailedCode];
                 } else {
-                    $error['error'] = $this->mimeTypeNotAllowedResponseCode;
+                    $error['error']   = $this->mimeTypeNotAllowedResponseCode;
                     $error['message'] = str_replace('%s', $mimeType, $this->config->responseMessages[$this->mimeTypeNotAllowedResponseCode]);
                 }
                 $this->errors[] = $error;
@@ -257,7 +245,7 @@ class Jafu
             $target     = null;
             $fileExists = true;
             while ($fileExists) {
-                $target     = $this->getSaveLocation() . str_replace('.', '', uniqid(time(), true)) . '_' . basename($file->name);
+                $target     = $this->saveLocation . str_replace('.', '', uniqid(time(), true)) . '_' . basename($file->name);
                 $fileExists = file_exists($target);
             }
             if (!move_uploaded_file($file->tmpName, $target)) {
@@ -265,7 +253,7 @@ class Jafu
                 throw new \Exception('The file ' . $target . ' could not be saved to the filesystem.');
             } else {
                 // add saved file to result array
-                $this->result[] = array(
+                $this->results[] = array(
                     'file'      => $target,
                     'inputName' => $file->inputName
                 );
