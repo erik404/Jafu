@@ -6,7 +6,7 @@ Standalone file uploader and file validator class. Guarantees unique name. Can h
 
 * configuration: 
         
-        1. rename config.php.dist to config.php
+        1. Rename config.php.dist to config.php
         2. Change the value of 'defaultSaveLocation' in config.php to the default save location on your system.
         3. [OPTIONAL] Change the response/error messages in config.php 
         
