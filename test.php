@@ -1,8 +1,8 @@
 <?php
-class test extends PHPUnit\Framework\TestCase
+class test
 {
-    public function testOnePlusOne() {
-        $this->assertTrue(true);
+    public function test() {
+        return true;
     }
 }
 ?>
