@@ -7,7 +7,7 @@
 
 namespace erik404;
 
-class Jafu
+final class Jafu
 {
     /**
      * see: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
@@ -135,14 +135,15 @@ class Jafu
     /**
      * Jafu constructor.
      *
+     * @param null $config (for PHPUnit test)
      * @throws \Exception
      */
-    function __construct()
+    function __construct($config = null)
     {
-        if (!file_exists('config.php')) {
-            throw new \Exception('The file config.php can not be found. Did you forgot to rename the config.php.dist in src/erik404/ to config.php?');
+        if ($config === null && !file_exists('config.php')) {
+            throw new \Exception('The file config.php can not be found. Did you forgot to rename the config.dist.php in src/erik404/ to config.php?');
         }
-        $this->config = require('config.php');
+        $this->config = $config !== null ? $config : require('config.php');
         $this->setSaveLocation($this->config->defaultSaveLocation);
     }
 
