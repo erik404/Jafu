@@ -1,5 +1,5 @@
 <?php
-class test extends PHPUnit_Framework_TestCase
+class test extends PHPUnit\Framework\TestCase
 {
     public function testOnePlusOne() {
         $this->assertTrue(true);
