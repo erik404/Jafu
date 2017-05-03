@@ -1,4 +1,4 @@
-v1.0.0
+v1.0.1
 # Jafu [![Build Status](https://travis-ci.org/erik404/Jafu.svg?branch=master)](https://travis-ci.org/erik404/Jafu)
 *"Just Another File Uploader"*
 
