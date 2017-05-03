@@ -1,5 +1,5 @@
 v1.0.0
-# Jafu
+# Jafu [![Build Status](https://travis-ci.org/erik404/Jafu.svg?branch=master)](https://travis-ci.org/erik404/Jafu)
 *"Just Another File Uploader"*
 
 Standalone file uploader and file validator class. Guarantees unique name. Can handle multiple optional file-upload inputs. Validates MIME-type against configurable allowed types.
