@@ -5,4 +5,3 @@ class test
         return true;
     }
 }
-?>
