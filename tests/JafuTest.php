@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class JafuTest extends TestCase
 {
-    const CONFIG_DIST_FILE = '../src/erik404/config.dist.php';
+    const CONFIG_DIST_FILE = '/src/erik404/config.dist.php'; // todo: local expects '../path/to/file', Travis CI expects 'path/to/file'
 
     /**
      * Test config.dist.php
