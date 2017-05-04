@@ -1,5 +1,5 @@
 <?php
-require '/vendor/autoload.php';
+require 'vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class JafuTest extends TestCase
 {
-    const CONFIG_DIST_FILE = '/src/erik404/config.dist.php'; // todo: local expects '../path/to/file', Travis CI expects 'path/to/file'
+    const CONFIG_DIST_FILE = 'src/erik404/config.dist.php';
 
     /**
      * Test config.dist.php
@@ -49,6 +49,5 @@ final class JafuTest extends TestCase
         $jafu = new \erik404\Jafu(require JafuTest::CONFIG_DIST_FILE);
         $this->assertEquals(true, gettype($jafu->getDefaultSaveLocation()) === 'string');
     }
-
 
 }
