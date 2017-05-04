@@ -1,7 +1,6 @@
 <?php
+require 'vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
-
-require 'src/erik404/Jafu.php';
 
 /**
  * @covers Jafu
