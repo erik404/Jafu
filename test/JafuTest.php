@@ -47,7 +47,8 @@ final class JafuTest extends TestCase
     public function testIfDefaultSaveLocationCanBeRetrieved()
     {
         $jafu = new \erik404\Jafu(require JafuTest::CONFIG_DIST_FILE);
-        $this->assertEquals(true, gettype($jafu->getDefaultSaveLocation()) === 'string');
+        $this->assertEquals(false, gettype($jafu->getDefaultSaveLocation()) === 'string');
     }
+
 
 }
