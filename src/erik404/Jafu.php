@@ -7,7 +7,7 @@
 
 namespace erik404;
 
-final class Jafu
+class Jafu
 {
     /**
      * see: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
