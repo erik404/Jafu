@@ -1,8 +1,5 @@
 <?php
-if (!@include __DIR__ . '/../vendor/autoload.php') {
-    echo PHP_EOL . 'missing dependencies' . PHP_EOL;
-    exit();
-}
+
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -18,7 +15,7 @@ final class JafuTest extends TestCase
     public function testConfigDist()
     {
         // assert if the config.dist.php file exists
-//        $this->assertFileExists(JafuTest::CONFIG_DIST_FILE);
+        $this->assertFileExists(JafuTest::CONFIG_DIST_FILE);
         // load the config file
         $configFile = require JafuTest::CONFIG_DIST_FILE;
         // assert if the $configFile holds an object
