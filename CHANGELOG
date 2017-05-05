@@ -1,0 +1,9 @@
+v1.0.1
+- Developed PHPUnit test for Jafu class
+- Refactored code
+
+v1.0.0
+- Multiple file upload handling
+- Guarantees unique name
+- Validates MIME-type against configurable list
+- Configurable response messages
