@@ -80,7 +80,7 @@ class Jafu
     /**
      * Returns the default save location from the config file
      *
-     * @return mixed
+     * @return string
      */
     public function getDefaultSaveLocation()
     {
