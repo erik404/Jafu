@@ -17,7 +17,7 @@ use erik404\Jafu;
 $jafu = new Jafu();
 
 // save location is set from the config file, you can override the save location using the setSaveLocation function and passing a location on the file-system.
-$jafu->setSaveLocation('/path/on/system');
+//$jafu->setSaveLocation('/path/on/system');
 // you can retrieve the 'defaultSaveLocation' stored in the config file with the getDefaultSaveLocation function.
 $jafu->setSaveLocation($jafu->getDefaultSaveLocation());
 
