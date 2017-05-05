@@ -1,6 +1,6 @@
 <?php
 /**
- * v1.0.0
+ * v1.0.1
  * Just Another File Uploader
  * Erik-Jan van de Wal, MIT License 2017.
  */
@@ -12,48 +12,99 @@ class Jafu
     /**
      * see: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
      */
-    const APPLICATION_TYPES = array('application/octet-stream', 'application/pkcs12', 'application/vnd.mspowerpoint', 'application/xhtml+xml', 'application/xml', 'application/pdf', 'application/msword');
-    const AUDIO_TYPES       = array('audio/midi', 'audio/mpeg', 'audio/webm', 'audio/ogg', 'audio/wav');
-    const TEXT_TYPES        = array('text/plain', 'text/html', 'text/css', 'text/javascript');
-    const IMAGE_TYPES       = array('image/gif', 'image/png', 'image/jpeg', 'image/bmp');
-    const VIDEO_TYPES       = array('video/webm', 'video/ogg');
+    const APPLICATION_TYPES = ['application/octet-stream', 'application/pkcs12', 'application/vnd.mspowerpoint', 'application/xhtml+xml', 'application/xml', 'application/pdf', 'application/msword'];
+    const AUDIO_TYPES       = ['audio/midi', 'audio/mpeg', 'audio/webm', 'audio/ogg', 'audio/wav'];
+    const TEXT_TYPES        = ['text/plain', 'text/html', 'text/css', 'text/javascript'];
+    const IMAGE_TYPES       = ['image/gif', 'image/png', 'image/jpeg', 'image/bmp'];
+    const VIDEO_TYPES       = ['video/webm', 'video/ogg'];
 
     /**
      * @var int
      */
-    protected $mimeValidationThruFinfoFailedCode = 10;
-    protected $mimeTypeNotAllowedResponseCode    = 9;
-    protected $noFileUploadedResponseCode        = 4;
-    protected $fileUploadedResponseCode          = 0;
+    protected $mimeValidationFailedCode = 10;
+    protected $mimeTypeNotAllowedCode   = 9;
+    protected $noFileUploadedCode       = 4;
+    protected $fileUploadedCode         = 0;
 
     /**
-     * Holds the config object
-     *
      * @var object
      */
     protected $config;
 
     /**
-     * Holds the errors array
-     *
+     * @var string
+     */
+    protected $saveLocation;
+
+    /**
      * @var array
      */
-    protected $errors = array();
+    protected $files;
+
+    /**
+     * @var array
+     */
+    protected $allowedMimeTypes = [];
+
+    /**
+     * @var array
+     */
+    protected $errors = [];
+
+    /**
+     * @var array
+     */
+    protected $results = [];
+
+    /**
+     * @param string $saveLocation
+     * @throws \Exception
+     * @return void
+     */
+    public function setSaveLocation($saveLocation)
+    {
+        if (!is_writable($saveLocation)) {
+            throw new \Exception('Directory ' . $saveLocation . ' not writable.');
+        }
+        $this->saveLocation = $saveLocation;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSaveLocation()
+    {
+        return $this->saveLocation;
+    }
+
+    /**
+     * Returns the default save location from the config file
+     *
+     * @return mixed
+     */
+    public function getDefaultSaveLocation()
+    {
+        return $this->config->defaultSaveLocation;
+    }
+
+    /**
+     * Expects the $_FILES array and normalizes this to a more sane structure.
+     *
+     * @param mixed $files
+     * @return void
+     */
+    public function setFiles($files)
+    {
+        $this->files = $this->normalize($files);
+    }
 
     /**
      * @return array
      */
-    public function getErrors()
+    public function getFiles()
     {
-        return $this->errors;
+        return $this->files;
     }
-
-    /**
-     * Holds the allowed file types array
-     *
-     * @var array
-     */
-    protected $allowedMimeTypes = array();
 
     /**
      * Expects (multiple) one-dimensional arrays holding the mime-types which are allowed for upload.
@@ -69,60 +120,20 @@ class Jafu
     }
 
     /**
-     * Holds a normalized array containing the information passed with the $_FILES array.
-     *
-     * @var array
+     * @return array
      */
-    protected $files;
-
-    /**
-     * Expects the $_FILES array and normalizes this to a more sane structure.
-     *
-     * @param mixed $files
-     * @return void
-     */
-    public function setFiles($files)
+    public function getAllowedMimeTypes()
     {
-        // todo validate if we truly are given the $_FILES array
-        $this->files = $this->normalize($files);
+        return $this->allowedMimeTypes;
     }
 
     /**
-     * Holds the directory where the file must be saved
-     *
-     * @var
+     * @return array
      */
-    protected $saveLocation;
-
-    /**
-     * @param mixed $saveLocation
-     * @throws \Exception
-     * @return void
-     */
-    public function setSaveLocation($saveLocation)
+    public function getErrors()
     {
-        if (!is_writable($saveLocation)) {
-            throw new \Exception('Directory ' . $saveLocation . ' not writable.');
-        }
-        $this->saveLocation = $saveLocation;
+        return $this->errors;
     }
-
-    /**
-     * Returns the default save location from the config file
-     *
-     * @return mixed
-     */
-    public function getDefaultSaveLocation()
-    {
-        return $this->config->defaultSaveLocation;
-    }
-
-    /**
-     * Holds the files which are successfully uploaded
-     *
-     * @var array
-     */
-    protected $results = array();
 
     /**
      * @return array
@@ -133,17 +144,15 @@ class Jafu
     }
 
     /**
-     * Jafu constructor.
-     *
      * @param null $config (for PHPUnit test)
      * @throws \Exception
      */
     function __construct($config = null)
     {
-        if ($config === null && !file_exists('config.php')) {
+        if ($config === null && !file_exists(__DIR__ . '/config.php')) {
             throw new \Exception('The file config.php can not be found. Did you forgot to rename the config.dist.php in src/erik404/ to config.php?');
         }
-        $this->config = $config !== null ? $config : require('config.php');
+        $this->config = $config === null ? require(__DIR__ . '/config.php') : $config;
         $this->setSaveLocation($this->config->defaultSaveLocation);
     }
 
@@ -176,22 +185,22 @@ class Jafu
     {
         // check if there are uploaded files, if not, set the right error response
         if (empty($this->files)) {
-            $this->errors[] = array(
+            $this->errors[] = [
                 'name'      => null,
                 'inputName' => null,
-                'error'     => $this->noFileUploadedResponseCode,
-                'message'   => $this->config->responseMessages[$this->noFileUploadedResponseCode]
-            );
+                'error'     => $this->noFileUploadedCode,
+                'message'   => $this->config->responseMessages[$this->noFileUploadedCode]
+            ];
         } else {
             // loop through all uploaded files and set the according error response if there are any
             foreach ($this->files as $file) {
-                if ($file->error !== $this->fileUploadedResponseCode) {
-                    $this->errors[] = array(
+                if ($file->error !== $this->fileUploadedCode) {
+                    $this->errors[] = [
                         'name'      => $file->name,
                         'inputName' => $file->inputName,
                         'error'     => $file->error,
                         'message'   => $this->config->responseMessages[$file->error]
-                    );
+                    ];
                 }
             }
         }
@@ -215,16 +224,16 @@ class Jafu
 
             // check the fetched MIME-type against the allowedMimeTypes array
             if (!$mimeType || !in_array($mimeType, $this->allowedMimeTypes)) {
-                $error = array(
+                $error = [
                     'name'      => $file->name,
                     'inputName' => $file->inputName
-                );
+                ];
                 if (!$mimeType) {
-                    $error['error']   = $this->mimeValidationThruFinfoFailedCode;
-                    $error['message'] = $this->config->responseMessages[$this->mimeValidationThruFinfoFailedCode];
+                    $error['error']   = $this->mimeValidationFailedCode;
+                    $error['message'] = $this->config->responseMessages[$this->mimeValidationFailedCode];
                 } else {
-                    $error['error']   = $this->mimeTypeNotAllowedResponseCode;
-                    $error['message'] = str_replace('%s', $mimeType, $this->config->responseMessages[$this->mimeTypeNotAllowedResponseCode]);
+                    $error['error']   = $this->mimeTypeNotAllowedCode;
+                    $error['message'] = str_replace('%s', $mimeType, $this->config->responseMessages[$this->mimeTypeNotAllowedCode]);
                 }
                 $this->errors[] = $error;
             }
@@ -234,7 +243,8 @@ class Jafu
     }
 
     /**
-     * Creates an unique name per file and saves it to the filesystem. On success the new file is stored in the result array together with the name of the input from which the upload originates from
+     * Creates an unique name per file and saves it to the filesystem.
+     * On success the new file is stored in the result array together with the name of the input from which the upload originates from
      *
      * @return void
      * @throws \Exception
@@ -250,52 +260,54 @@ class Jafu
                 $fileExists = file_exists($target);
             }
             if (!move_uploaded_file($file->tmpName, $target)) {
-                // throws an exception because this is a error the user can't fix. todo rollback earlier saved files
+                // throws an exception because this is a error the user can't fix.
                 throw new \Exception('The file ' . $target . ' could not be saved to the filesystem.');
             } else {
-                // add saved file to result array
-                $this->results[] = array(
+                // add to result array
+                $this->results[] = [
                     'file'      => $target,
                     'inputName' => $file->inputName
-                );
+                ];
             }
         }
     }
 
     /**
      * Structure the information stored in $_FILES so Jafu can handle both single and multiple file-uploads.
-     * Ignore error code 4 (noFileUploadedResponseCode). This enables optional multiple file-uploads.
+     * Ignore error code 4 (noFileUploadedCode). This enables optional multiple file-uploads.
+     * see: http://php.net/manual/en/features.file-upload.post-method.php
      *
      * @param $files ($_FILES)
-     * @return array holding the uploaded file information in objects
+     * @return array holding the uploaded file information as objects
      */
     private function normalize($files)
     {
-        $filesNormalized = array();
+        $filesNormalized = [];
         foreach ($files as $key => $value) {
             if (gettype($files[$key]['name']) === 'array') {
-                for ($i = 0; $i < count($files[$key]['name']); $i++) {
-                    if ($files[$key]['error'][$i] !== $this->noFileUploadedResponseCode) {
-                        $filesNormalized[] = (object)array(
+                $arrLength = count($files[$key]['name']);
+                for ($i = 0; $i < $arrLength; $i++) {
+                    if ($files[$key]['error'][$i] !== $this->noFileUploadedCode) {
+                        $filesNormalized[] = (object)[
                             'name'      => $files[$key]['name'][$i],
                             'type'      => $files[$key]['type'][$i],
                             'tmpName'   => $files[$key]['tmp_name'][$i],
                             'error'     => (int)$files[$key]['error'][$i],
                             'size'      => $files[$key]['size'][$i],
                             'inputName' => $key
-                        );
+                        ];
                     }
                 }
             } else {
-                if ($files[$key]['error'] !== $this->noFileUploadedResponseCode) {
-                    $filesNormalized[] = (object)array(
+                if ($files[$key]['error'] !== $this->noFileUploadedCode) {
+                    $filesNormalized[] = (object)[
                         'name'      => $files[$key]['name'],
                         'type'      => $files[$key]['type'],
                         'tmpName'   => $files[$key]['tmp_name'],
                         'error'     => (int)$files[$key]['error'],
                         'size'      => $files[$key]['size'],
                         'inputName' => $key
-                    );
+                    ];
                 }
             }
         }
