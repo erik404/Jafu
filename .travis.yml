@@ -7,4 +7,4 @@ php:
 before_script:
   - composer install --dev --verbose
 
-script: phpunit test/JafuTest.php
+script: phpunit --configuration test/phpunit.xml --verbose
