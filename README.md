@@ -10,8 +10,9 @@ Standalone file uploader and file validator class. Guarantees unique name. Can h
         2. Change the value of 'defaultSaveLocation' in config.php to the default save location on your system
         3. [OPTIONAL] Change the response/error messages in config.php 
         
-        Requires: >=php v5.6.0
+        PHP     : >=v5.6.0
         Composer: composer require erik404\jafu
+
 
 See example.php for oversimplified example code explaining the public functions.
 
