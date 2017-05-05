@@ -78,7 +78,7 @@ class Jafu
     }
 
     /**
-     * Returns the default save location from the config file
+     * Returns the default save location from the config file.
      *
      * @return string
      */
@@ -157,7 +157,7 @@ class Jafu
     }
 
     /**
-     * Performs the validation and save operation
+     * Performs the validation and save operation.
      *
      * @return bool
      */
@@ -177,7 +177,7 @@ class Jafu
     }
 
     /**
-     * Check the uploaded files for errors
+     * Checks if there are files uploaded and if one of the files had an error uploading. Stores the error information in $errors[].
      *
      * @return bool
      */
@@ -209,15 +209,14 @@ class Jafu
     }
 
     /**
-     * Checks if the files MIME type is allowed or not
+     * Get the MIME type using PHP's finfo. Checks it against the allowedMimeTypes array. Stores the error information in $errors[].
+     * See: http://php.net/manual/en/class.finfo.php
      *
      * @return bool
      */
     private function checkIfMimeTypeIsRestricted()
     {
         foreach ($this->files as $file) {
-            // fetches the files MIME-type using PHP's finfo
-            // see: http://php.net/manual/en/class.finfo.php
             $finfo    = new \finfo(FILEINFO_MIME);
             $mimeType = $finfo->file($file->tmpName);
             $mimeType = $mimeType === false ? false : explode(';', $mimeType)[0];
@@ -243,8 +242,8 @@ class Jafu
     }
 
     /**
-     * Creates an unique name per file and saves it to the filesystem.
-     * On success the new file is stored in the result array together with the name of the input from which the upload originates from
+     * Creates a guaranteed unique name per file and saves it to the filesystem.
+     * On success the path to the new file is stored in the result array together with the name of the input from which the upload originates from.
      *
      * @return void
      * @throws \Exception
@@ -275,7 +274,7 @@ class Jafu
     /**
      * Structure the information stored in $_FILES so Jafu can handle both single and multiple file-uploads.
      * Ignore error code 4 (noFileUploadedCode). This enables optional multiple file-uploads.
-     * see: http://php.net/manual/en/features.file-upload.post-method.php
+     * See: http://php.net/manual/en/features.file-upload.post-method.php
      *
      * @param $files ($_FILES)
      * @return array holding the uploaded file information as objects
