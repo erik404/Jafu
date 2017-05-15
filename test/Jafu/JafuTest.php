@@ -41,6 +41,16 @@ final class JafuTest extends TestCase
     /**
      * @depends testClassCanBeConstructed
      */
+    public function testSetGetMaxSize()
+    {
+        $jafu = new \erik404\Jafu(require JafuTest::CONFIG_DIST_FILE);
+        $jafu->setMaxSize(100);
+        $this->assertEquals(100, $jafu->getMaxSize());
+    }
+
+    /**
+     * @depends testClassCanBeConstructed
+     */
     public function testMimeTypeConstants()
     {
         $jafu = new \erik404\Jafu(require JafuTest::CONFIG_DIST_FILE);
@@ -187,12 +197,12 @@ final class JafuTest extends TestCase
             ],
 
         ];
-        $jafu->setSaveLocation(__DIR__.'/');
+        $jafu->setSaveLocation(__DIR__ . '/');
         $jafu->setFiles($_FILES);
         $jafu->save();
 
         $this->assertCount(3, $jafu->getResults());
-        foreach($jafu->getResults() as $result) {
+        foreach ($jafu->getResults() as $result) {
             $this->assertTrue(file_exists($result['file']));
             unlink($result['file']);
         }
