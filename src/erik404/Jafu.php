@@ -47,6 +47,11 @@ class Jafu
     protected $allowedMimeTypes = [];
 
     /**
+     * @var int
+     */
+    protected $maxSize;
+
+    /**
      * @var array
      */
     protected $errors = [];
@@ -128,6 +133,22 @@ class Jafu
     }
 
     /**
+     * @return int
+     */
+    public function getMaxSize()
+    {
+        return $this->maxSize;
+    }
+
+    /**
+     * @param int $maxSize
+     */
+    public function setMaxSize($maxSize)
+    {
+        $this->maxSize = $maxSize;
+    }
+
+    /**
      * @return array
      */
     public function getErrors()
@@ -170,7 +191,6 @@ class Jafu
             return false; // the MIME type of (one of) the file(s) is not allowed
         }
 
-        // do the actual saving.
         $this->saveFilesToFilesystem();
 
         return true;
