@@ -16,7 +16,6 @@ Standalone file uploader and file validator class. Guarantees unique name. Can h
 
 See example.php for oversimplified example code explaining the public functions.
 
-
 <br /><br />
 All suggestions and comments are welcome!
 
